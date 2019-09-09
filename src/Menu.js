@@ -5,6 +5,8 @@ import { css, keyframes } from '@emotion/core';
 import history from "./history";
 import _ from 'lodash';
 
+const MENU_WIDTH = '350px';
+
 const Backdrop = styled('div')`
   position: fixed;
   top: 0;
@@ -76,23 +78,25 @@ const MenuHeader = ({ onClose }) => (
 )
 
 const slideIn = keyframes`
- from { left: -360px; }
+ from { left: -${MENU_WIDTH}; }
  to { left: 0px;}
 `;
 
 const BigContainer = styled.div`
   position: relative;
-  //animation: ${slideIn} 0.3s ease;
-  transition: left 0.3s  
+  left: ${props => { console.log('left is', props.left); return props.left; }};  
+  animation: ${slideIn} 0.3s ease-in;
+  transition: left 0.3s;  
   *, *::before, *::after {
     box-sizing: border-box;
   }  
+  pointer-events: ${props => { console.log('Visibility:',props); return props.hover}}  
 `;
 
 const Container = styled('div')`
   position: static;
   height: 100%;
-  width: 360px;
+  width: ${MENU_WIDTH};
   background: white;
   padding-top: 1.5em;
   padding-bottom: 1.5em;  
@@ -110,8 +114,18 @@ const Container = styled('div')`
   }    
 `;
 
+// const AddHover = css`
+//     visibility: visible;
+// `
+//
+// const RemHover = css`
+//     visibility: hidden;
+// `
+
+
 // will change to use divs to avoid nested <A> tags but need to add click link
 const StyledItem = css`
+  cursor: pointer;
   line-height: 3.2em;
   width: 100%;
   display: block;
@@ -127,10 +141,12 @@ const StyledItem = css`
     color: black;        
   }
   
-  &:hover > div {
-    visibility: visible;
+  &:hover > div { 
+    visibility: visible;  
   }  
 `;
+
+// visibility: ${props => { console.log('Visibility:',props); return props.hover}};
 
 const Item2 = ({onClick, id, to, ...props}) => {
   return <div key={id} {...props} onClick={ (e)=>{ e.stopPropagation(); console.log('Click', to); history.push(`${to.pathname}?${to.search}`)}}/>
@@ -138,7 +154,24 @@ const Item2 = ({onClick, id, to, ...props}) => {
 
 const Item = styled(Item2)`
   cursor: pointer;
-  ${StyledItem}  
+  line-height: 3.2em;
+  width: 100%;
+  display: block;
+  position: static;    
+  text-decoration: none;  
+  color: black;
+  padding-left: 34px;
+  padding-right: 34px;
+
+  &:hover {
+    text-decoration: none;
+    background-color: #81CDF2;
+    color: black;        
+  }
+  
+  &:hover > div { 
+    visibility: visible;  
+    
 `
 // Only local as link needs react router
 const Link = ({to}, {...props}) => {
@@ -152,9 +185,9 @@ const Link = ({to}, {...props}) => {
   )
 };
 
-const SubItem = styled(Link)`
-  ${StyledItem} 
-`;
+// const SubItem = styled(Link)`
+//   ${StyledItem}
+// `;
 
 const StyledSubCategory = styled.div`
   padding-left: 34px;
@@ -177,6 +210,12 @@ const Wrapper = styled.div`
 const Menu = ({ categories, onClose }) => {
   const [myRect, setMyRect] = useState({ left: 0, top: 0 });
   const containerRef = useRef(null);
+  const [myClassName, setMyClassName] = useState("");
+  const [bigLeft, setBigLeft] = useState('0px');
+  const [enableHover, setEnableHover] = useState('none');
+
+  setTimeout(()=>setEnableHover('auto'), 500)            ;
+
   // const [animating, setAnimating] = useState(false);
 
   let key = 0;
@@ -228,16 +267,21 @@ const Menu = ({ categories, onClose }) => {
 
   // onAnimationStart={setAnimationStart}  onAnimationEnd={setAnimationDone}
 
+  const animClose = () => {
+    setBigLeft('-' + MENU_WIDTH);
+    setTimeout( () => onClose(), 500);
+  };
+
   return (
 
     <Backdrop onClick={e => {
       if (e.target === e.currentTarget) {
-        onClose();
+        animClose();
       }
     }}>
-      <BigContainer>
+      <BigContainer className={myClassName} left={bigLeft} hover={enableHover}>
         <Container  ref={containerRef}>
-          <MenuHeader onClose={onClose}/>
+          <MenuHeader onClose={animClose}/>
           {_.times(15 , () => categories.map(category => (
             <Item key={++key} id={++key} onMouseEnter={callHover}
                   to={{ pathname: "/products", search: `cat_id=${category.id}` }}>
